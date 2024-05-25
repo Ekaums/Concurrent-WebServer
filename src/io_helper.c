@@ -50,6 +50,9 @@ int open_listen_fd(int port) {
     // Create a socket descriptor 
     int listen_fd;
     if ((listen_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        // 1. domain = AF_INET -- Protocol (IPv4 here) 
+        // 2. type = SOCK_STREAM -- Type of socket (TCP here)
+        // 3. protocol = protocol (Set to 0 for default)
 	fprintf(stderr, "socket() failed\n");
 	return -1;
     }
@@ -57,23 +60,33 @@ int open_listen_fd(int port) {
     // Eliminates "Address already in use" error from bind
     int optval = 1;
     if (setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, (const void *) &optval, sizeof(int)) < 0) {
+            // 1. Using this socket we just created
+            // 2. Set an option at the protocol level
+            // 3. The option being allow other sockets to bind() to this port, if it crashes (wont be actively listening anymore)
+            // 4. Turn this on (1)
 	fprintf(stderr, "setsockopt() failed\n");
 	return -1;
     }
     
     // Listen_fd will be an endpoint for all requests to port on any IP address for this host
+    // Setting up a socket struct shenanigans
     struct sockaddr_in server_addr;
     bzero((char *) &server_addr, sizeof(server_addr));
     server_addr.sin_family = AF_INET; 
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY); 
-    server_addr.sin_port = htons((unsigned short) port); 
-    if (bind(listen_fd, (sockaddr_t *) &server_addr, sizeof(server_addr)) < 0) {
-	fprintf(stderr, "bind() failed\n");
+    server_addr.sin_port = htons((unsigned short) port);
+    // server_addr is loaded up with IP address and port to bind to
+
+
+    if (bind(listen_fd, (sockaddr_t *) &server_addr, sizeof(server_addr)) < 0) { // Pass the file descriptor and initialized socket (IP + port) to be used
+                                                                                // Result: Socket is bound to IP addr. and port, which is interfaced through file descriptor
+	fprintf(stderr, "bind() failed\n");                                        // This IP addr.+port is reserved for this process by OS
 	return -1;
     }
     
-    // Make it a listening socket ready to accept connection requests 
+    // Make it a listening socket ready to accept connection requests (socket will listen for incoming connections)
     if (listen(listen_fd, 1024) < 0) {
+    // Before a socket can listen() on its designated port, it must first bind() to this port
 	fprintf(stderr, "listen() failed\n");
 	return -1;
     }
