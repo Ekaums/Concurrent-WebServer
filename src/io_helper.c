@@ -4,14 +4,16 @@ ssize_t readline(int fd, void *buf, size_t maxlen) {
     char c;
     char *bufp = buf;
     int n;
+
+    // For the entire size of buffer
     for (n = 0; n < maxlen - 1; n++) { // leave room at end for '\0'
 	int rc;
-        if ((rc = read_or_die(fd, &c, 1)) == 1) {
-            *bufp++ = c;
+        if ((rc = read_or_die(fd, &c, 1)) == 1) { // Read data, if there is any
+            *(bufp++) = c; // Insert data at next location in buffer
             if (c == '\n')
                 break;
         } else if (rc == 0) {
-            if (n == 1)
+            if (n == 1) // Why isnt this 0?
                 return 0; /* EOF, no data read */
             else
                 break;    /* EOF, some data was read */

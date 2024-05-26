@@ -1,11 +1,6 @@
 #include "io_helper.h"
 #include "request.h"
 
-//
-// Some of this code stolen from Bryant/O'Halloran
-// Hopefully this is not a problem ... :)
-//
-
 #define MAXBUF (8192)
 
 void request_error(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg) {
@@ -58,24 +53,25 @@ int request_parse_uri(char *uri, char *filename, char *cgiargs) {
     char *ptr;
     
     if (!strstr(uri, "cgi")) { 
-	// static
-	strcpy(cgiargs, "");
-	sprintf(filename, ".%s", uri);
-	if (uri[strlen(uri)-1] == '/') {
-	    strcat(filename, "index.html");
-	}
-	return 1;
-    } else { 
-	// dynamic
-	ptr = index(uri, '?');
-	if (ptr) {
-	    strcpy(cgiargs, ptr+1);
-	    *ptr = '\0';
-	} else {
-	    strcpy(cgiargs, "");
-	}
-	sprintf(filename, ".%s", uri);
-	return 0;
+        // static
+        strcpy(cgiargs, "");
+        sprintf(filename, ".%s", uri);
+        if (uri[strlen(uri)-1] == '/') { // Why not instead just check if whole uri is a '/'?
+            strcat(filename, "index.html");
+        }
+        return 1;
+    } 
+    else { 
+        // dynamic
+        ptr = index(uri, '?'); // '?' seperates file name from arguments
+        if (ptr) {
+            strcpy(cgiargs, ptr+1);
+            *ptr = '\0';
+        } else {
+            strcpy(cgiargs, "");
+        }
+        sprintf(filename, ".%s", uri);
+        return 0;
     }
 }
 
@@ -107,8 +103,8 @@ void request_serve_dynamic(int fd, char *filename, char *cgiargs) {
     if (fork_or_die() == 0) {                        // child
 	setenv_or_die("QUERY_STRING", cgiargs, 1);   // args to cgi go here
 	dup2_or_die(fd, STDOUT_FILENO);              // make cgi writes go to socket (not screen)
-	extern char **environ;                       // defined by libc 
-	execve_or_die(filename, argv, environ);
+	extern char **environ;                       // defined by libc. Passed to provide all other environment variables
+	execve_or_die(filename, argv, environ);      // execute program, with no command line args (argv)
     } else {
 	wait_or_die(NULL);
     }
@@ -123,6 +119,8 @@ void request_serve_static(int fd, char *filename, int filesize) {
     
     // Rather than call read() to read the file into memory, 
     // which would require that we allocate a buffer, we memory-map the file
+    // mmap = space in process' virtual memory maps to the file. Whenever we try to access this data, we only endure the overhead of a page fault
+    // as opposed to the overhead of copying data all from disk into a buffer (and dealing with buffer size etc.)
     srcp = mmap_or_die(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);
     close_or_die(srcfd);
     
@@ -145,36 +143,40 @@ void request_serve_static(int fd, char *filename, int filesize) {
 void request_handle(int fd) {
     int is_static;
     struct stat sbuf;
-    char buf[MAXBUF], method[MAXBUF], uri[MAXBUF], version[MAXBUF];
+    char buf[MAXBUF], method[MAXBUF], uri[MAXBUF], version[MAXBUF]; // Strings for holding the request (buf), and then parsing the data (method, uri, version)
     char filename[MAXBUF], cgiargs[MAXBUF];
     
-    readline_or_die(fd, buf, MAXBUF);
-    sscanf(buf, "%s %s %s", method, uri, version);
-    printf("method:%s uri:%s version:%s\n", method, uri, version);
+    readline_or_die(fd, buf, MAXBUF); // Read first line of client request
+    sscanf(buf, "%s %s %s", method, uri, version); // Parse request for three strings, seperated by newlines
+    printf("method: %s uri:%s version:%s\n", method, uri, version);
     
-    if (strcasecmp(method, "GET")) {
-	request_error(fd, method, "501", "Not Implemented", "server does not implement this method");
-	return;
+    if (strcasecmp(method, "GET")) { // If the method is not GET, value != 0 and print error since not supported
+        request_error(fd, method, "501", "Not Implemented", "server does not implement this method");
+        return;
     }
-    request_read_headers(fd);
+    request_read_headers(fd); // Reads and discard additional headers from the client request that are not needed. Ready to read request body 
     
     is_static = request_parse_uri(uri, filename, cgiargs);
-    if (stat(filename, &sbuf) < 0) {
-	request_error(fd, filename, "404", "Not found", "server could not find this file");
-	return;
+    if (stat(filename, &sbuf) < 0) { // sbuf is a struct that will be filled with info about the file (like 'ls -l')
+        // Check if filename exists
+        request_error(fd, filename, "404", "Not found", "server could not find this file");
+        return;
     }
+
+    printf("Accessing file: %s\n", filename);
     
     if (is_static) {
-	if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode)) {
-	    request_error(fd, filename, "403", "Forbidden", "server could not read this file");
-	    return;
-	}
-	request_serve_static(fd, filename, sbuf.st_size);
-    } else {
-	if (!(S_ISREG(sbuf.st_mode)) || !(S_IXUSR & sbuf.st_mode)) {
-	    request_error(fd, filename, "403", "Forbidden", "server could not run this CGI program");
-	    return;
-	}
-	request_serve_dynamic(fd, filename, cgiargs);
+        if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode)) { // Check if filename is indeed a file (not a directory, symlink, etc.) and that it can be read by the web server
+            request_error(fd, filename, "403", "Forbidden", "server could not read this file");
+            return;
+        }
+        request_serve_static(fd, filename, sbuf.st_size);
+    } 
+    else {
+        if (!(S_ISREG(sbuf.st_mode)) || !(S_IXUSR & sbuf.st_mode)) { // Check if filename is indeed a file (not a directory, symlink, etc.) and that it can be executed by the web server
+            request_error(fd, filename, "403", "Forbidden", "server could not run this CGI program");
+            return;
+        }
+        request_serve_dynamic(fd, filename, cgiargs);
     }
 }

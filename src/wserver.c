@@ -33,16 +33,20 @@ int main(int argc, char *argv[]) {
     // now, get to work
     int listen_fd = open_listen_fd_or_die(port); // Open a communication endpoint (to listen on)
     while (1) {
-	struct sockaddr_in client_addr;
+	struct sockaddr_in client_addr; // Why isnt this outside the for loop
 	int client_len = sizeof(client_addr);
 
 	// Accept next incoming connection
+	// Note: In this setup will accept block until a client connects? is this fine?
 	int conn_fd = accept_or_die(listen_fd, (sockaddr_t *) &client_addr, (socklen_t *) &client_len);
+								// 1. Listening socket descriptor (fd)
+							   // 2. Struct that will be filled in with the info of the client addr.
+							  // 3. Size
 	
 	// Handle it
 	request_handle(conn_fd);
 
-	// ?
+	// Must close() once done with request
 	close_or_die(conn_fd);
     }
     return 0;
