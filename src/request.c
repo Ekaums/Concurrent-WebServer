@@ -56,7 +56,7 @@ int request_parse_uri(char *uri, char *filename, char *cgiargs) {
         // static
         strcpy(cgiargs, "");
         sprintf(filename, ".%s", uri);
-        if (uri[strlen(uri)-1] == '/') { // Why not instead just check if whole uri is a '/'?
+        if (uri[strlen(uri)-1] == '/') { // If last char is '/', we are either in root directory OR are accessing another directory
             strcat(filename, "index.html");
         }
         return 1;
