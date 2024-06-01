@@ -1,26 +1,38 @@
-# An admittedly primitive Makefile
-# To compile, type "make" or make "all"
-# To remove files, type "make clean"
+# Makefile for C++ project (Do not change this file)
 
-CC = gcc
-CFLAGS = -Wall
-OBJS = wserver.o wclient.o request.o io_helper.o 
+# Compiler and flags
+CXX = g++
+CXXFLAGS = -std=c++11 -Wall
 
-.SUFFIXES: .c .o 
+# Executable name
+TARGET = server.out
 
-all: wserver wclient spin.cgi
+# Source files
+SRCS = $(wildcard *.cpp)
 
-wserver: wserver.o request.o io_helper.o
-	$(CC) $(CFLAGS) -o wserver wserver.o request.o io_helper.o 
+# Object files
+OBJS = $(SRCS:.cpp=.o)
 
-wclient: wclient.o io_helper.o
-	$(CC) $(CFLAGS) -o wclient wclient.o io_helper.o
+# Dependency files
+DEPS = $(SRCS:.cpp=.d)
 
-spin.cgi: spin.c
-	$(CC) $(CFLAGS) -o spin.cgi spin.c
+# Compile and link
+$(TARGET): $(OBJS)
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
 
-.c.o:
-	$(CC) $(CFLAGS) -o $@ -c $<
+# Compile source files to object files
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+# Generate dependency files
+%.d: %.cpp
+	@$(CXX) $(CXXFLAGS) -MM $< | sed 's/$*\.o/& $@/g' > $@
+
+# Include dependency files
+-include $(DEPS)
+
+.PHONY: clean go
+
+# Clean up
 clean:
-	-rm -f $(OBJS) wserver wclient spin.cgi
+	rm -f $(TARGET) $(OBJS) $(DEPS)

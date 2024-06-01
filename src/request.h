@@ -1,5 +1,4 @@
-#ifndef __REQUEST_H__
+#pragma once
+#define MAXBUF (8192)
 
-void request_handle(int fd);
-
-#endif // __REQUEST_H__
+void handle_request(int fd);

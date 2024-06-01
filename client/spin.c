@@ -7,12 +7,6 @@
 
 #define MAXBUF (8192)
 
-//
-// This program is intended to help you test your web server.
-// You can use it to test that you are correctly having multiple threads
-// handling http requests.
-// 
-
 double get_seconds() {
     struct timeval t;
     int rc = gettimeofday(&t, NULL);
