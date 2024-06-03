@@ -1,5 +1,6 @@
 #include "helper.h"
 #include "request.h"
+#include "threadpool.h"
 
 /*
   ./server [-d <basedir>] [-p <portnum>]
@@ -9,19 +10,25 @@ int main(int argc, char *argv[]){
   // default arguments
   std::string root_dir = ".";
   int port = DEFAULT_PORT;
+  size_t threads = 1;
 
   int c;
   // check if user provides alternative arguments
-  while ((c = getopt(argc, argv, "d:p:")) != -1){
+  while ((c = getopt(argc, argv, "d:p:t:")) != -1){
     switch(c){
       case 'd':
-      std::cerr << "changing directory to " << optarg << std::endl;
       root_dir = optarg;
+      std::cerr << "changing directory to " << root_dir << std::endl;
       break;
 
       case 'p':
-      std::cerr << "changing port to " << optarg << std::endl;
       port = atoi(optarg);
+      std::cerr << "changing port to " << port << std::endl;
+      break;
+
+      case 't':
+      threads = strtoul(optarg, NULL, 10);
+      std::cerr << "using " << threads << " threads" << std::endl;
       break;
 
       default:
@@ -29,6 +36,8 @@ int main(int argc, char *argv[]){
       exit(1);
     }
   }
+
+  start(threads);
 
   // change directory for website, or exit (die)
   chdir_or_die(root_dir.c_str());
