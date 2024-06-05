@@ -3,7 +3,7 @@
 #include "threadpool.h"
 
 /*
-  ./server [-d <basedir>] [-p <portnum>]
+  ./server [-d <basedir>] [-p <portnum>] [-t <num_threads>]
 */
 int main(int argc, char *argv[]){
 
@@ -37,7 +37,9 @@ int main(int argc, char *argv[]){
     }
   }
 
-  start(threads);
+  // Create threadpool
+  Threadpool deadpool(threads);
+  //deadpool.start();
 
   // change directory for website, or exit (die)
   chdir_or_die(root_dir.c_str());

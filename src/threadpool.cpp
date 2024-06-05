@@ -1,35 +1,17 @@
 #include "threadpool.h"
 #include "atomic_writer.h"
 
-static bool ready = false;
-static std::vector<std::thread> threads;
-static std::mutex queue_mutex;
-static std::condition_variable mutex_condition;
-
-// Waiting loop for threads
-static void threadloop(void){
-
-    std::unique_lock<std::mutex> lock(queue_mutex);
-
-    Atomic_cout() << "Thread: " << std::this_thread::get_id() << " is waiting" << std::endl;
-    mutex_condition.wait(lock, []{return ready;});
-
-    Atomic_cout() << "Thread: " << std::this_thread::get_id() << " is doing work" << std::endl;
-    ready = false;
-    std::this_thread::sleep_for(std::chrono::seconds(3));
-    lock.unlock();
-}
-
-void start(size_t num_threads){
-
-    std::ostringstream string;
+Threadpool::Threadpool(size_t num_threads){
 
     for(int i = 0; i < num_threads; i++){
-        threads.emplace_back(std::thread(&threadloop));
+        threads.emplace_back(std::thread(&Threadpool::threadloop, this));
         Atomic_cout() << "thread " << threads[i].get_id() << " created" << std::endl;
     }
+}
 
-    while(1){
+void Threadpool::start(){
+    
+    while(true){
     Atomic_cout() << "waiting to continue..." << std::endl;
     std::cin.get();
     std::unique_lock<std::mutex> lock(queue_mutex);
@@ -40,3 +22,19 @@ void start(size_t num_threads){
 
     std::cout << "done" << std::endl;
 }
+
+// Waiting loop for threads
+void Threadpool::threadloop(void){
+    while(true){
+    std::unique_lock<std::mutex> lock(queue_mutex);
+
+    Atomic_cout() << "Thread: " << std::this_thread::get_id() << " is waiting" << std::endl;
+    mutex_condition.wait(lock, [this]{return ready;});
+
+    Atomic_cout() << "Thread: " << std::this_thread::get_id() << " is doing work" << std::endl;
+    ready = false;
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    lock.unlock();
+    }
+}
+
