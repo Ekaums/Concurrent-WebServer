@@ -3,7 +3,7 @@
 #include "threadpool.h"
 
 /*
-  ./server [-d <basedir>] [-p <portnum>] [-t <num_threads>]
+  ./server [-d <basedir>] [-p <port>] [-t <num_threads>] [-b <buffer_size>]
 */
 int main(int argc, char *argv[]){
 
@@ -11,10 +11,11 @@ int main(int argc, char *argv[]){
   std::string root_dir = ".";
   int port = DEFAULT_PORT;
   size_t threads = 1;
+  size_t buffer = 3;
 
   int c;
   // check if user provides alternative arguments
-  while ((c = getopt(argc, argv, "d:p:t:")) != -1){
+  while ((c = getopt(argc, argv, "d:p:t:b:")) != -1){
     switch(c){
       case 'd':
       root_dir = optarg;
@@ -31,8 +32,13 @@ int main(int argc, char *argv[]){
       std::cerr << "using " << threads << " threads" << std::endl;
       break;
 
+      case 'b':
+      buffer = strtoul(optarg, NULL, 10);
+      std::cerr << "using buffer size " << buffer << std::endl;
+      break;
+
       default:
-      std::cerr << "usage: wserver [-d basedir] [-p port]" << std::endl;
+      std::cerr << "usage: wserver [-d basedir] [-p port] [-t <num_threads>] [-b <buffer_size>]" << std::endl;
       exit(1);
     }
   }
