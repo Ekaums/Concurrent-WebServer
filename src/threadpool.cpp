@@ -1,40 +1,43 @@
 #include "threadpool.h"
 #include "atomic_writer.h"
+#include "request.h"
+#include "helper.h"
 
-Threadpool::Threadpool(size_t num_threads){
-
+Threadpool::Threadpool(size_t num_threads, size_t buf_size) : queue_size(buf_size)
+{
     for(int i = 0; i < num_threads; i++){
         threads.emplace_back(std::thread(&Threadpool::threadloop, this));
         Atomic_cout() << "thread " << threads[i].get_id() << " created" << std::endl;
     }
 }
 
-void Threadpool::start(){
-    
-    while(true){
-    Atomic_cout() << "waiting to continue..." << std::endl;
-    std::cin.get();
-    std::unique_lock<std::mutex> lock(queue_mutex);
-    ready = true;
-    mutex_condition.notify_one();
-    lock.unlock();
-    }
-
-    std::cout << "done" << std::endl;
-}
-
-// Waiting loop for threads
 void Threadpool::threadloop(void){
     while(true){
     std::unique_lock<std::mutex> lock(queue_mutex);
 
-    Atomic_cout() << "Thread: " << std::this_thread::get_id() << " is waiting" << std::endl;
-    mutex_condition.wait(lock, [this]{return ready;});
+    Atomic_cout() << "Thread: " << std::this_thread::get_id() << " waiting" << std::endl;
+    job.wait(lock, [this]{return !jobs.empty();}); // Wait until job is in queue (then gets signalled)
 
-    Atomic_cout() << "Thread: " << std::this_thread::get_id() << " is doing work" << std::endl;
-    ready = false;
-    std::this_thread::sleep_for(std::chrono::seconds(2));
+    Atomic_cout() << "Thread: " << std::this_thread::get_id() << " doing work" << std::endl;
+    int job = jobs.front();
+    jobs.pop();
     lock.unlock();
+    processJob(job);
     }
+}
+
+void Threadpool::queueJob(int fd){
+    std::unique_lock<std::mutex> lock(queue_mutex);
+    empty.wait(lock, [this]{return (jobs.size() != queue_size);}); // Ensure that queue is not full. If it is, wait to be signalled (by workers) that there is an empty spot
+    jobs.push(fd);
+    Atomic_cout() << "Added " << fd << " to queue" << std::endl;
+    job.notify_one();
+    lock.unlock();
+}
+
+void Threadpool::processJob(int fd){
+    Atomic_cout() << "Handling " << fd << std::endl;
+    handle_request(fd);
+    close_or_die(fd);
 }
 
