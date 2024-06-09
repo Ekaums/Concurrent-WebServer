@@ -24,7 +24,7 @@ static void request_serve_static(int fd, const std::string &filename, int filesi
 
     std::ostringstream response;
     response << "HTTP/1.0 200 OK\r\n"
-             << "Server: OSTEP WebServer\r\n"
+             << "Server: WebServer\r\n"
              << "Content-Length: " << filesize << "\r\n"
              << "Content-Type: " << filetype << "\r\n\r\n";
     
@@ -36,7 +36,7 @@ static void request_serve_static(int fd, const std::string &filename, int filesi
 }
 
 static void request_serve_dynamic(int fd, const std::string &filename, const std::string &cgiargs){
-    char buf[MAXBUF] = "HTTP/1.0 200 OK\r\nServer: OSTEP WebServer\r\n";
+    char buf[MAXBUF] = "HTTP/1.0 200 OK\r\nServer: WebServer\r\n";
     send_or_die(fd, buf, strlen(buf), 0);
 
     char *argv[] = {NULL};

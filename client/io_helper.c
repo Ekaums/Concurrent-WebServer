@@ -27,24 +27,33 @@ ssize_t readline(int fd, void *buf, size_t maxlen) {
 
 int open_client_fd(char *hostname, int port) {
     int client_fd;
-    struct hostent *hp;
-    struct sockaddr_in server_addr;
     
-    if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
         return -1; 
-    
-    // Fill in the server's IP address and port 
-    if ((hp = gethostbyname(hostname)) == NULL)
-        return -2; // check h_errno for cause of error 
-    bzero((char *) &server_addr, sizeof(server_addr));
+    }
+
+    // TODO: look into getaddrinfo() as it may be better to use to get server info
+
+    struct hostent *hp; // Struct used to get info about server
+    // Get server's IP address 
+    if ((hp = gethostbyname(hostname)) == NULL){
+        return -2; // check h_errno for cause of error
+    }
+
+    struct sockaddr_in server_addr; // Struct used to connect to server
+    bzero((char *) &server_addr, sizeof(server_addr)); // zero for padding
+
     server_addr.sin_family = AF_INET;
+
+    // Copy server IP & port to sockaddr_in struct
     bcopy((char *) hp->h_addr, 
           (char *) &server_addr.sin_addr.s_addr, hp->h_length);
-    server_addr.sin_port = htons(port);
+    server_addr.sin_port = htons(port); // Convert port number from host endianness to network
     
     // Establish a connection with the server 
-    if (connect(client_fd, (sockaddr_t *) &server_addr, sizeof(server_addr)) < 0)
+    if (connect(client_fd, (sockaddr_t *) &server_addr, sizeof(server_addr)) < 0){
         return -1;
+    }
     return client_fd;
 }
 
