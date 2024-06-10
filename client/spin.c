@@ -5,6 +5,8 @@
 #include <sys/time.h>
 #include <unistd.h>
 
+// TODO: use this somewhere
+
 #define MAXBUF (8192)
 
 double get_seconds() {

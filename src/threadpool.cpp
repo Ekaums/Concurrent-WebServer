@@ -1,7 +1,10 @@
 #include "threadpool.h"
 #include "atomic_writer.h"
 #include "request.h"
-#include "helper.h"
+#include "server_helper.h"
+
+
+// TODO: Use seperate locks for pushing/popping queue
 
 Threadpool::Threadpool(size_t num_threads, size_t buf_size) : queue_size(buf_size)
 {
@@ -18,10 +21,10 @@ void Threadpool::threadloop(void){
     Atomic_cout() << "Thread: " << std::this_thread::get_id() << " waiting" << std::endl;
     job.wait(lock, [this]{return !jobs.empty();}); // Wait until job is in queue (then gets signalled)
 
-    Atomic_cout() << "Thread: " << std::this_thread::get_id() << " doing work" << std::endl;
     int job = jobs.front();
     jobs.pop();
     lock.unlock();
+    Atomic_cout() << "Thread: " << std::this_thread::get_id() << " handling " << job << std::endl;
     processJob(job);
     }
 }
@@ -36,7 +39,6 @@ void Threadpool::queueJob(int fd){
 }
 
 void Threadpool::processJob(int fd){
-    Atomic_cout() << "Handling " << fd << std::endl;
     handle_request(fd);
     close_or_die(fd);
 }

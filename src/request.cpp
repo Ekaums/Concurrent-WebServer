@@ -1,5 +1,5 @@
 #include <sstream>
-#include "helper.h"
+#include "server_helper.h"
 #include "request.h"
 
 void request_get_filetype(const std::string &filename, std::string &filetype) {
@@ -122,7 +122,6 @@ void handle_request(int fd){
         std::cerr << "recv failed" << std::endl;
         return;
     }
-
     buf[bytes_received] = '\0';
 
     std::string request = buf;

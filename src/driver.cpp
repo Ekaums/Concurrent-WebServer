@@ -1,4 +1,4 @@
-#include "helper.h"
+#include "server_helper.h"
 #include "request.h"
 #include "threadpool.h"
 
@@ -7,7 +7,7 @@
 */
 int main(int argc, char *argv[]){
 
-  // default arguments
+  // default args
   std::string root_dir = ".";
   int port = DEFAULT_PORT;
   size_t threads = 1;
@@ -19,12 +19,12 @@ int main(int argc, char *argv[]){
     switch(c){
       case 'd':
       root_dir = optarg;
-      std::cerr << "changing directory to " << root_dir << std::endl;
+      std::cerr << "changed directory to " << root_dir << std::endl;
       break;
 
       case 'p':
       port = atoi(optarg);
-      std::cerr << "changing port to " << port << std::endl;
+      std::cerr << "changed port to " << port << std::endl;
       break;
 
       case 't':
@@ -38,7 +38,7 @@ int main(int argc, char *argv[]){
       break;
 
       default:
-      std::cerr << "usage: wserver [-d basedir] [-p port] [-t <num_threads>] [-b <buffer_size>]" << std::endl;
+      std::cerr << "usage: ./server [-d basedir] [-p port] [-t <num_threads>] [-b <buffer_size>]" << std::endl;
       exit(1);
     }
   }
