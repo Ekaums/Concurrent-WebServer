@@ -1,4 +1,5 @@
 #include "client_helper.h"
+#include "client_threadpool.h"
 
 #define DEFAULT_PORT (10000)
 
@@ -43,14 +44,11 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  /* Open connection to the server*/
-  int clientfd = open_client_fd_or_die(host.c_str(), port);
+  Threadpool client(threads, host, port, filename);
+  std::cout << "Created all clients.\n";
 
-  /* Send request */
-  client_send(clientfd, filename);
-
-  /* Print response*/
-  client_recv(clientfd);
-
-  close_or_die(clientfd);
+  for(auto& thread : client.threads){
+    if(thread.joinable())
+    thread.join();
+  }
 }

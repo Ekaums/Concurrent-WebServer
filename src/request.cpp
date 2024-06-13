@@ -1,5 +1,6 @@
 #include <sstream>
 #include "server_helper.h"
+#include "atomic_writer.h"
 #include "request.h"
 
 void request_get_filetype(const std::string &filename, std::string &filetype) {
@@ -60,7 +61,6 @@ static void request_discard_headers(std::string &request){
         exit(1);
     }
     request = request.substr(header_end + 4);
-    std::cout << "request body: " << request << std::endl;
 }
 
 static void request_error(int fd, const std::string &errnum, const std::string &shortmsg, const std::string &longmsg, const std::string &cause){
@@ -130,10 +130,10 @@ void handle_request(int fd){
     // parse request line
     std::string method, uri, version;
     request_stream >> method >> uri >> version;
-    std::cout << "Method: " << method << " URI: " << uri << " version: " << version << std::endl;
+    Atomic_cout() << "Method: " << method << " URI: " << uri << " version: " << version << std::endl;
 
     if(method != "GET"){
-        std::cout << "method is not GET" << std::endl;
+        Atomic_cout() << "method is not GET" << std::endl;
         request_error(fd, "501", "Not implemented", "this method is not implemented", method);
         return;
     }
@@ -142,7 +142,6 @@ void handle_request(int fd){
 
     std::string filename, cgiargs;
     bool is_static = request_parse_uri(uri, filename, cgiargs);
-    std::cout << "filepath: " << filename << "\nargs: " << cgiargs << std::endl;
 
     struct stat sbuf;
     if(stat(filename.c_str(), &sbuf) < 0){
@@ -150,7 +149,7 @@ void handle_request(int fd){
         return;
     }
 
-    std::cout << "Accessing file " << filename << std::endl;
+   // Atomic_cout() << "Accessing file " << filename << std::endl;
 
     if(is_static){
         if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode)){

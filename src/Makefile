@@ -5,7 +5,7 @@ CXX = g++
 CXXFLAGS = -std=c++11 -Wall
 
 # Executable name
-TARGET = server.out
+TARGET = server
 
 # Source files
 SRCS = $(wildcard *.cpp)

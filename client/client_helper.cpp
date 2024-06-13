@@ -45,15 +45,16 @@ void client_recv(int fd){
     char buf[MAXBUF];
     ssize_t bytes_received;
 
-    // Two seperate recv() calls are needed as two seperate send() calls are used by the server (for headers and body respectively)
-
+    /* 
+    Two seperate recv() calls are needed as two seperate send() calls 
+    are used by the server (for headers and body respectively)
+    */
     if((bytes_received = recv(fd, buf, MAXBUF-1, 0)) < 0){
         std::cerr << "recv1 failed" << std::endl;
         return;
     }
     buf[bytes_received] = '\0';
     std::string request = buf;
-    std::cout << "header:\n" << request << std::endl;
 
     if((bytes_received = recv(fd, buf, MAXBUF-1, 0)) < 0){
         std::cerr << "recv2 failed" << std::endl;
@@ -61,5 +62,4 @@ void client_recv(int fd){
     }
     buf[bytes_received] = '\0';
     request = buf;
-    std::cout << "body:\n" << request << std::endl;
 }
