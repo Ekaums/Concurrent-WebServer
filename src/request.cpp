@@ -149,8 +149,6 @@ void handle_request(int fd){
         return;
     }
 
-   // Atomic_cout() << "Accessing file " << filename << std::endl;
-
     if(is_static){
         if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode)){
         // Check if filename is a file (not a directory, symlink, etc.) and that it can be read
