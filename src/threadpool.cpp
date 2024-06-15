@@ -3,8 +3,12 @@
 #include "request.h"
 #include "server_helper.h"
 
-
-// TODO: Use seperate locks for pushing/popping queue
+/* using two separate locks for push/pop doesn't work! std::queue is NOT a thread-safe data structure
+   meaning it can't correctly handle a push/pop occuring concurrently. Both operations modify internal data
+   (like the size) which can then lead to a race condition when interleaved (outcome of where pointers are 
+   pointing will be unpredictable).
+   therefore, the best approach is simply one lock ;-;
+*/
 
 Threadpool::Threadpool(size_t num_threads, size_t buf_size) : queue_size(buf_size)
 {
@@ -32,7 +36,6 @@ void Threadpool::threadloop(void){
 
 void Threadpool::queueJob(int fd){
     std::unique_lock<std::mutex> lock(queue_mutex);
-    Atomic_cout() << "jobs in queue: " << jobs.size() << std::endl;
     empty.wait(lock, [this]{return (jobs.size() != queue_size);}); // Ensure that queue is not full. If it is, wait to be signalled (by workers) that there is an empty spot
     jobs.push(fd);
     Atomic_cout() << "Added " << fd << " to queue" << std::endl;

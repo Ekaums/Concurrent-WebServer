@@ -21,13 +21,12 @@ class Threadpool{
     // Processing loop for threads
     void threadloop(void);
 
-    // Handle request (where the magic happens :p )
+    // Handle request (where the magic happens)
     void processJob(int fd);
 
     public:
     // Create threads
     Threadpool(size_t num_threads, size_t buf_size);
 
-    // TODO: Lock for both tail and head of queue. Work with big lock first (avoid premature optimziation)
     void queueJob(int fd);
 };
