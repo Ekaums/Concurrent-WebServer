@@ -1,6 +1,6 @@
 #include "server_helper.h"
 #include "request.h"
-#include "threadpool.h"
+#include "server_threadpool.h"
 
 /*
   ./server [-d <basedir>] [-p <port>] [-t <num_threads>] [-b <buffer_size>]
