@@ -1,18 +1,23 @@
 #include "server_helper.h"
 
-// Set up a socket to listen for incoming connections
+// Set up a non-blocking(!) socket to listen for incoming connections
 int open_listen_fd(int port){
 
-    int listen_fd;
-    if ((listen_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
-        std::cerr << "socket failed" << std::endl;
+    int sockfd;
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
+        std::cerr << "socket fail" << std::endl;
         return -1;
-    } 
+    }
+
+    if(fcntl(sockfd, F_SETFL, O_NONBLOCK) == -1){
+        std::cerr << "fcntl fail" << std::endl;
+        return -1;
+    }
 
     // Eliminates "Address already in use" error from bind
     int optval = 1;
-    if (setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, (const void *) &optval, sizeof(int)) < 0) {
-        std::cerr << "setsockopt failed" << std::endl;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const void *) &optval, sizeof(int)) < 0) {
+        std::cerr << "setsockopt fail" << std::endl;
         return -1;
     }
 
@@ -24,16 +29,16 @@ int open_listen_fd(int port){
     server_addr.sin_port = htons((unsigned short) port);
     // server_addr is loaded up with IP address and port to bind to
 
-    if (bind(listen_fd, (sockaddr_t *) &server_addr, sizeof(server_addr)) < 0){
+    if (bind(sockfd, (sockaddr_t *) &server_addr, sizeof(server_addr)) < 0){
         std::cerr << "bind failed" << std::endl;
         return -1;
     }
 
     // Listen for incoming connections
-    if (listen(listen_fd, QUEUE_SIZE) < 0) {
+    if (listen(sockfd, QUEUE_SIZE) < 0) {
 	    std::cerr << "listen failed" << std::endl;
 	    return -1;
     }
 
-    return listen_fd;
+    return sockfd;
 }
