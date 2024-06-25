@@ -1,2 +1,2 @@
-Creating a multi-threaded webserver in C++
+Creating a HTTP/TCP-based blazingly-fast web server in C++
 :p

@@ -31,7 +31,7 @@ $(TARGET): $(OBJS)
 # Include dependency files
 -include $(DEPS)
 
-.PHONY: clean go
+.PHONY: clean
 
 # Clean up
 clean:

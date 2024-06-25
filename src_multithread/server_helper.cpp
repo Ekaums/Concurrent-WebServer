@@ -1,6 +1,6 @@
 #include "server_helper.h"
 
-// Set up a socket descriptor to listen for incoming connections
+// Set up a socket to listen for incoming connections
 int open_listen_fd(int port){
 
     int listen_fd;
@@ -18,7 +18,7 @@ int open_listen_fd(int port){
 
     // Setting up a socket struct shenanigans
     sockaddr_in_t server_addr;
-    bzero((char *) &server_addr, sizeof(server_addr)); // Used to zero the padding
+    bzero((char *) &server_addr, sizeof(server_addr)); // Zero memory
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY); 
     server_addr.sin_port = htons((unsigned short) port);
