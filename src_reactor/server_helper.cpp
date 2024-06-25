@@ -1,6 +1,6 @@
 #include "server_helper.h"
 
-// Set up a non-blocking(!) socket to listen for incoming connections
+// Set up a socket to listen for incoming connections
 int open_listen_fd(int port){
 
     int sockfd;
@@ -9,10 +9,12 @@ int open_listen_fd(int port){
         return -1;
     }
 
-    if(fcntl(sockfd, F_SETFL, O_NONBLOCK) == -1){
-        std::cerr << "fcntl fail" << std::endl;
-        return -1;
-    }
+    // For use in non-blocking IO setup
+    // if(fcntl(sockfd, F_SETFL, O_NONBLOCK) == -1){
+    //    std::cerr << "fcntl fail" << std::endl;
+    //    return -1;
+    //}
+    // Additionally make every new socket non-blocking
 
     // Eliminates "Address already in use" error from bind
     int optval = 1;
