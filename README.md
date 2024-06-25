@@ -1,2 +1,2 @@
-Creating a HTTP/TCP-based blazingly-fast web server in C++
+Creating a blazingly-fast HTTP web server in C++
 :p
