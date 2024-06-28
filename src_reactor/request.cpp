@@ -1,7 +1,6 @@
-#include <sstream>
-#include "server_helper.h"
-#include "atomic_writer.h"
 #include "request.h"
+#include "server_helper.h"
+#include <sstream>
 
 void request_get_filetype(const std::string &filename, std::string &filetype) {
     if (filename.find(".html") != std::string::npos) 
@@ -53,6 +52,7 @@ static void request_serve_dynamic(int fd, const std::string &filename, const std
     }
 }
 
+
 static void request_error(int fd, const std::string &errnum, const std::string &shortmsg, const std::string &longmsg, const std::string &cause){
     std::ostringstream body, response;
     std::string body_str, response_str;
@@ -74,10 +74,11 @@ static void request_error(int fd, const std::string &errnum, const std::string &
              << "Content-Length: " << body_str.length() << "\r\n\r\n";
     
     response_str = response.str();
-
+    
     send_or_die(fd, response_str.c_str(), response_str.length(), 0);
     send_or_die(fd, body_str.c_str(), body_str.length(), 0);
 }
+
 
 static bool request_parse_uri(const std::string &uri, std::string &filename, std::string &cgiargs){
     if(uri.find("cgi") == std::string::npos){
@@ -107,29 +108,30 @@ void handle_request(int fd){
     char buf[MAXBUF];
     ssize_t bytes_received;
 
+    // MSG_PEEK flag is useful to peek at the type of data!
+    // MSG_DONTWAIT for non-blocking
     if((bytes_received = recv(fd, buf, MAXBUF-1, 0)) < 0){
         std::cerr << "recv failed" << std::endl;
         return;
     }
+
     buf[bytes_received] = '\0';
 
-    std::string request = buf;
-    std::istringstream request_stream(request);
+    std::istringstream request_stream((std::string)buf);
 
     // parse request line
     std::string method, uri, version;
     request_stream >> method >> uri >> version;
-    Atomic_cout() << "Method: " << method << " URI: " << uri << " version: " << version << std::endl;
+    std::cout << "Method: " << method << " URI: " << uri << " version: " << version << std::endl;
 
     if(method != "GET"){
-        Atomic_cout() << "method is not GET" << std::endl;
+        std::cout << "method is not GET" << std::endl;
         request_error(fd, "501", "Not implemented", "this method is not implemented", method);
         return;
     }
 
     std::string filename, cgiargs;
     bool is_static = request_parse_uri(uri, filename, cgiargs);
-
     struct stat sbuf;
     if(stat(filename.c_str(), &sbuf) < 0){
         request_error(fd, "404", "Not found", "could not find this file", filename);
@@ -153,3 +155,4 @@ void handle_request(int fd){
         request_serve_dynamic(fd, filename, cgiargs);
     }
 }
+
