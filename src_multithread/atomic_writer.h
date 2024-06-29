@@ -9,24 +9,24 @@
    The solution: Write entire line into a ostringstream and feed that to std::cout as one string
 */
 class Atomic_cout{
-    private:
-    std::ostringstream stream;
+  private:
+  std::ostringstream stream;
 
-    public:
-    // Any value passed to stream operator
-    template <typename T>
-    Atomic_cout& operator <<(T const &output);
+  public:
+  // Any value passed to stream operator
+  template <typename T>
+  Atomic_cout& operator <<(T const &output);
 
-    // Specifically for ostream functions (in this case, just for std::endl)
-    Atomic_cout& operator <<(std::ostream& (*f)(std::ostream&));
+  // Specifically for ostream functions (in this case, just for std::endl)
+  Atomic_cout& operator <<(std::ostream& (*f)(std::ostream&));
 
-    ~Atomic_cout();
+  ~Atomic_cout();
 };
 
 
 // Must supply templated function in header in order for a function to be created (explained more in journal.md)
 template <typename T>
 Atomic_cout& Atomic_cout::operator<< (T const &output){
-    stream << output;
-    return *this;
+  stream << output;
+  return *this;
 }

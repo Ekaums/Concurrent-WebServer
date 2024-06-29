@@ -59,7 +59,6 @@ int main(int argc, char *argv[]){
   while(true){
     // accept next incoming connection
     int conn_fd = accept_or_die(fd, (sockaddr_t *) &client_addr, (socklen_t *) &client_len);
-
     deadpool.queueJob(conn_fd);
   }
 
