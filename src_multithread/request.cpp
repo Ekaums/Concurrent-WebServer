@@ -1,4 +1,5 @@
 #include <sstream>
+#include <cstring>
 #include "server_helper.h"
 #include "atomic_writer.h"
 #include "request.h"
@@ -107,7 +108,7 @@ void handle_request(int fd){
   char buf[MAXBUF];
   ssize_t bytes_received;
 
-  if((bytes_received = recv(fd, buf, MAXBUF-1, 0)) < 0){
+  if((bytes_received = recv(fd, buf, MAXBUF-1, 0)) <= 0){
     std::cerr << "recv failed" << std::endl;
     return;
   }

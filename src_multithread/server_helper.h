@@ -4,11 +4,12 @@
 #include <unistd.h>
 #include <assert.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <netdb.h>
 #include <fcntl.h>
-
+#include <strings.h>
 
 typedef struct sockaddr sockaddr_t;
 typedef struct sockaddr_in sockaddr_in_t;
