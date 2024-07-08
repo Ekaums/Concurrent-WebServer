@@ -1,8 +1,16 @@
 #include "request.h"
-#include "server_helper.h"
 #include <sstream>
+#include <iostream>
+#include <fcntl.h>
+#include <assert.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/socket.h>
+#include <sys/mman.h>
+#include <sys/wait.h>
 
-void request_get_filetype(const std::string &filename, std::string &filetype) {
+static void request_get_filetype(const std::string &filename, std::string &filetype) {
   if (filename.find(".html") != std::string::npos) 
     filetype = "text/html";
   else if (filename.find(".gif") != std::string::npos) 

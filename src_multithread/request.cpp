@@ -4,7 +4,7 @@
 #include "atomic_writer.h"
 #include "request.h"
 
-void request_get_filetype(const std::string &filename, std::string &filetype) {
+static void request_get_filetype(const std::string &filename, std::string &filetype) {
   if (filename.find(".html") != std::string::npos) 
     filetype = "text/html";
   else if (filename.find(".gif") != std::string::npos) 

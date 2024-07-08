@@ -1,5 +1,3 @@
-# Makefile for C++ project (Do not change this file)
-
 # Compiler and flags
 CXX = g++
 CXXFLAGS = -std=c++11 -Wall
