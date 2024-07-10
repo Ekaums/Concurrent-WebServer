@@ -44,7 +44,7 @@ static void request_serve_static(int fd, const std::string &filename, int filesi
 }
 
 static void request_serve_dynamic(int fd, const std::string &filename, const std::string &cgiargs){
-  char buf[MAXBUF] = "HTTP/1.0 200 OK\r\nServer: WebServer\r\n";
+  char buf[READ_SIZE] = "HTTP/1.0 200 OK\r\nServer: WebServer\r\n";
   send_or_die(fd, buf, strlen(buf), 0);
 
   char *argv[] = {NULL};
@@ -113,12 +113,12 @@ static bool request_parse_uri(const std::string &uri, std::string &filename, std
 }
 
 void handle_request(int fd){
-  char buf[MAXBUF];
+  char buf[READ_SIZE];
   ssize_t bytes_received;
 
   // MSG_PEEK flag is useful to peek at the type of data!
   // MSG_DONTWAIT for non-blocking
-  if((bytes_received = recv(fd, buf, MAXBUF-1, 0)) < 0){
+  if((bytes_received = recv(fd, buf, READ_SIZE-1, 0)) <= 0){
     std::cerr << "recv failed" << std::endl;
     return;
   }

@@ -1,14 +1,12 @@
-#include "server_helper.h"
 #include <string>
 #include <iostream>
 #include <unistd.h>
 #include <assert.h>
+#include <sys/epoll.h>
+#include <sys/socket.h>
+#include "server_helper.h"
+#include "request.h"
 
-#define chdir_or_die(path) \
-  assert(chdir(path) == 0);
-
-#define open_listen_fd_or_die(port) \
-  ({ int rc = open_listen_fd(port); assert(rc >= 0); rc; })
 
 /*
   ./server [-d <basedir>] [-p <port>]
@@ -45,5 +43,64 @@ int main(int argc, char *argv[]){
   int listenfd = open_listen_fd_or_die(port);
 
   // epoll event loop stuff
+  int epollfd;
+  if((epollfd = epoll_create1(0)) == -1){
+    std::cerr << "epoll failed" << std::endl;
+    exit(1);
+  }
+
+  // For setting up events
+  struct epoll_event event;
+
+  // Monitor server socket 
+  event.data.fd = listenfd;
+  event.events = EPOLLIN;
+  if(epoll_ctl(epollfd, EPOLL_CTL_ADD, listenfd, &event) == -1){
+    std::cerr << "epollctl failed" << std::endl;
+    exit(1);
+  }
+  
+  int nev, clientfd;
+  struct epoll_event events[MAX_EVENTS]; // holds all new events returned by epoll
+
+  std::cout << "starting event loop" << std::endl;
+  while(true){
+
+    // Retrieve new events
+    nev = epoll_wait(epollfd, events, MAX_EVENTS, -1); // do we want a timeout??
+    if(nev == -1){
+      std::cerr << "epoll wait failed" << std::endl;
+      exit(1);
+    }
+
+    // Handle them
+    for(int i=0; i<nev; i++){
+
+      if(events[i].events & EPOLLIN){ //Incoming data
+        
+        if(events[i].data.fd == listenfd){ // Incoming client connection
+          std::cout << "accepting new conn" << std::endl;
+          clientfd = accept_or_die(listenfd);
+
+          // Add client to epoll buffer
+          event.data.fd = clientfd;
+          event.events = EPOLLIN;
+          if(epoll_ctl(epollfd, EPOLL_CTL_ADD, clientfd, &event) == -1){
+            std::cerr << "epollctl failed" << std::endl;
+            exit(1);
+          }
+        }
+        else{ // Existing client request
+          std::cout << "client rq" << std::endl;
+          clientfd = events[i].data.fd;
+          handle_request(clientfd);
+          close(clientfd);
+        }
+      }
+      else{
+        // SHOULD I BE WAITING FOR EPOLLOUT BEFORE SENDING RESPONSE??
+      }
+    } 
+  }
 
 }

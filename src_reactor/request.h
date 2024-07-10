@@ -1,6 +1,6 @@
 #pragma once
 
-#define MAXBUF (8192)
+#define READ_SIZE (8192)
 
 void handle_request(int fd);
 
