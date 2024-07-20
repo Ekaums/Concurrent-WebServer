@@ -1,9 +1,10 @@
 #include <sstream>
+#include <cstring>
 #include "server_helper.h"
 #include "atomic_writer.h"
 #include "request.h"
 
-void request_get_filetype(const std::string &filename, std::string &filetype) {
+static void request_get_filetype(const std::string &filename, std::string &filetype) {
   if (filename.find(".html") != std::string::npos) 
     filetype = "text/html";
   else if (filename.find(".gif") != std::string::npos) 
@@ -107,7 +108,7 @@ void handle_request(int fd){
   char buf[MAXBUF];
   ssize_t bytes_received;
 
-  if((bytes_received = recv(fd, buf, MAXBUF-1, 0)) < 0){
+  if((bytes_received = recv(fd, buf, MAXBUF-1, 0)) <= 0){
     std::cerr << "recv failed" << std::endl;
     return;
   }

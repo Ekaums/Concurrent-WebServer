@@ -1,6 +1,12 @@
 #include <string>
-#include "server_helper.h"
-#include "request.h"
+#include <iostream>
+#include <unistd.h>
+#include <assert.h>
+#include <sys/epoll.h>
+#include <sys/socket.h>
+#include "include/server_helper.h"
+#include "include/request.h"
+
 
 /*
   ./server [-d <basedir>] [-p <port>]
@@ -31,91 +37,74 @@ int main(int argc, char *argv[]){
     }
   }
 
-  // change directory for website, or exit (die)
   chdir_or_die(root_dir.c_str());
 
-  // listen on port (using fd)
+  // listen on port
   int listenfd = open_listen_fd_or_die(port);
 
-  /*  kqueue init  */
-  int kq = kqueue_or_die();
-  
-  struct kevent event;
-
-  // macro to init struct event
-  // Init listen socket for monitoring on read-ready events
-  EV_SET(&event, listenfd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
-  /*
-    EVFILT_READ = Monitor for read availibility
-    EV_ADD = Add to event queue
-    EV_ENABLE = Enable event
-  */
-
-  // update kqueue with this event
-  if (kevent(kq, &event, 1, NULL, 0, NULL) == -1) {
-    std::cerr << "kevent" << std::endl;
+  // epoll event loop stuff
+  int epollfd;
+  if((epollfd = epoll_create1(0)) == -1){
+    std::cerr << "epoll failed" << std::endl;
     exit(1);
   }
 
-  struct kevent events[MAX_EVENTS];
-  sockaddr_in_t client_addr;
-  int client_len = sizeof(client_addr);
-  int nev, clientfd;
+  // For setting up events
+  struct epoll_event event;
 
-  // get to work
-  std::cout << "ready" << std::endl;
+  // Monitor server socket 
+  event.data.fd = listenfd;
+  event.events = EPOLLIN;
+  if(epoll_ctl(epollfd, EPOLL_CTL_ADD, listenfd, &event) == -1){
+    std::cerr << "epollctl failed" << std::endl;
+    exit(1);
+  }
+  
+  int nev, clientfd;
+  struct epoll_event events[MAX_EVENTS]; // holds all new events returned by epoll
+
+  std::cout << "starting event loop" << std::endl;
   while(true){
-    
+
     // Retrieve new events
-    nev = kevent(kq, NULL, 0, events, MAX_EVENTS, NULL);
+    nev = epoll_wait(epollfd, events, MAX_EVENTS, -1); // do we want a timeout??
     if(nev == -1){
-      std::cerr << "kevent" << std::endl;
+      std::cerr << "epoll wait failed" << std::endl;
       exit(1);
     }
 
     // Handle them
-    for(int i = 0; i < nev; i++){
+    for(int i=0; i<nev; i++){
 
-      // If there is data to read from the socket
-      if(events[i].filter == EVFILT_READ){
+      if(events[i].events & EPOLLIN){ //Incoming data
+        
+        if(events[i].data.fd == listenfd){ // Incoming client connection
+          std::cout << "accepting new conn" << std::endl;
+          clientfd = accept_or_die(listenfd);
 
-        // And it is the server socket -- incoming connection
-        if(events[i].ident == listenfd){
-          std::cout << "accepting new connection" << std::endl;
-          clientfd = accept_or_die(listenfd, (sockaddr_t *) &client_addr, (socklen_t *) &client_len);
-
-          // add new client to kqueue in order to monitor
-          add_client(kq, clientfd, event);
+          // Add client to epoll buffer
+          event.data.fd = clientfd;
+          event.events = EPOLLIN;
+          if(epoll_ctl(epollfd, EPOLL_CTL_ADD, clientfd, &event) == -1){
+            std::cerr << "epollctl failed" << std::endl;
+            exit(1);
+          }
         }
-        // Not server socket -- incoming request from existing client
-        else{
-          std::cout << "handling request" << std::endl;
-          clientfd = events[i].ident;
+        else{ // Existing client request
+          std::cout << "client rq" << std::endl;
+          clientfd = events[i].data.fd;
           handle_request(clientfd);
-          remove_client(kq, clientfd, event);
+          close(clientfd);
         }
-      }  
-    }
+      }
+      else{
+        /* If doing partial R/W:
+            First try sending as much data as possible.
+            If we are able to send everything, done.
+            If not, keep track of remaining data, subscribe client to EPOLLOUT, wait for signal, and send remaining data
+        */
+          
+      }
+    } 
   }
-}
-
-
-void add_client(int kq, int connfd, struct kevent &event){
-  EV_SET(&event, connfd, EVFILT_READ, EV_ADD|EV_ENABLE, 0, 0, NULL);
-
-  // If client can not be connected, close connection and continue
-  if (kevent(kq, &event, 1, NULL, 0, NULL) == -1) {
-    std::cerr << "kevent EV_ADD" << std::endl;
-    close(connfd);
-  }
-}
-
-void remove_client(int kq, int connfd, struct kevent &event){
-  EV_SET(&event, connfd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-
-  // If client can not be removed
-  if (kevent(kq, &event, 1, NULL, 0, NULL) == -1) {
-    std::cerr << "kevent EV_DELETE" << std::endl;
-  }
-  close(connfd);
 }

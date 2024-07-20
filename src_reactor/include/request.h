@@ -1,37 +1,8 @@
 #pragma once
 
-// TODO: dont pile all headers here mayb
-#include <iostream>
-#include <assert.h>
-#include <sys/socket.h>
-#include <sys/event.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <iostream>
-#include <fcntl.h>
-#include <unistd.h>
-#include <netdb.h>
+#define READ_SIZE (8192)
 
-typedef struct sockaddr sockaddr_t;
-typedef struct sockaddr_in sockaddr_in_t;
-
-int open_listen_fd(int port);
-
-void add_client(int kq, int connfd, struct kevent &event);
-void remove_client(int kq, int connfd, struct kevent &event);
-
-#define DEFAULT_PORT (20000)
-#define QUEUE_SIZE (1024)
-#define MAX_EVENTS (100)
-
-#define chdir_or_die(path) \
-  assert(chdir(path) == 0);
-
-#define open_listen_fd_or_die(port) \
-  ({ int rc = open_listen_fd(port); assert(rc >= 0); rc; })
-
-#define accept_or_die(s, addr, addrlen) \
-  ({ int rc = accept(s, addr, addrlen); assert(rc >= 0); rc; })
+void handle_request(int fd);
 
 #define open_or_die(pathname, flags, mode) \
   ({ int rc = open(pathname, flags, mode); assert(rc >= 0); rc; })
@@ -62,9 +33,3 @@ void remove_client(int kq, int connfd, struct kevent &event);
 
 #define wait_or_die(status) \
   ({ pid_t pid = wait(status); assert(pid >= 0); pid; })
-
-#define chdir_or_die(path) \
-  assert(chdir(path) == 0);
-
-#define kqueue_or_die() \
-  ({ int kq = kqueue(); assert(kq >= 0); kq; })

@@ -4,11 +4,12 @@
 #include <unistd.h>
 #include <assert.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <netdb.h>
 #include <fcntl.h>
-
+#include <strings.h>
 
 typedef struct sockaddr sockaddr_t;
 typedef struct sockaddr_in sockaddr_in_t;
@@ -25,7 +26,7 @@ int open_listen_fd(int port);
   assert(chdir(path) == 0);
 
 #define accept_or_die(s, addr, addrlen) \
-  ({ int rc = accept(s, addr, addrlen); assert(rc >= 0); rc; })
+  ({ int rc = accept(s, addr, addrlen); assert(rc >= 0); rc; }) // TODO, REMOVE THIS ADDR AND ADDRLEN ARGS I  DONT EVEN USE THEM
 
 #define open_or_die(pathname, flags, mode) \
   ({ int rc = open(pathname, flags, mode); assert(rc >= 0); rc; })
