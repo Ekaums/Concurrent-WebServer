@@ -1,4 +1,4 @@
-#include "atomic_writer.h"
+#include "include/atomic_writer.h"
 
 Atomic_cout& Atomic_cout::operator<< (std::ostream& (*f)(std::ostream&)){
   stream << f;

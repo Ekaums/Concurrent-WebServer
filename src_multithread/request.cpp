@@ -1,8 +1,8 @@
 #include <sstream>
 #include <cstring>
-#include "server_helper.h"
-#include "atomic_writer.h"
-#include "request.h"
+#include "include/server_helper.h"
+#include "include/atomic_writer.h"
+#include "include/request.h"
 
 static void request_get_filetype(const std::string &filename, std::string &filetype) {
   if (filename.find(".html") != std::string::npos) 

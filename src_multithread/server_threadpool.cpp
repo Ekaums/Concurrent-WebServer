@@ -1,7 +1,7 @@
-#include "server_threadpool.h"
-#include "atomic_writer.h"
-#include "request.h"
-#include "server_helper.h"
+#include "include/server_threadpool.h"
+#include "include/atomic_writer.h"
+#include "include/request.h"
+#include "include/server_helper.h"
 
 /* using two separate locks for push/pop doesn't work! std::queue is NOT a thread-safe data structure
    meaning it can't correctly handle a push/pop occuring concurrently. Both operations modify internal data

@@ -13,6 +13,8 @@ add_executable(${PROJECT_NAME}
     driver.cpp
     request.cpp
     server_helper.cpp
+    server_threadpool.cpp
+    atomic_writer.cpp
 )
 
 # Add include directories
