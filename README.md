@@ -22,10 +22,8 @@ This design can be further optimized with non-blocking sockets. This means that 
 ## Reactor
 The ultimate design will be a hybrid of both designs and in theory has the best performance. Although this approach was not implemented, in theory it takes the best aspects of both architectures and combines them. But what makes this a hybrid approach?
 
-### Epoll
-The way that the event-based approach handles I/O (with non-blocking sockets) is more efficient, as the server does not waste time waiting to completely receive/send a request. Instead, it does as much I/O as it can on a connection, then comes back later when it can handle more. This is great, however, the design is single-threaded and therefore does not completely utilize the CPU. The CPU-intensive aspect of the server, that is, processing and forming a request, is only being done on a single thread!
+The way that the epoll approach handles I/O (with non-blocking sockets) is more efficient, as the server does not waste time waiting to completely receive/send a request. Instead, it does as much I/O as it can on a connection, then comes back later when it can handle more. This is great, however, the design is single-threaded and therefore does not completely utilize the CPU. The CPU-intensive aspect of the server, that is, processing and forming a request, is only being done on a single thread!
 
-### Threadpool
 The threadpool is best for utilizing all CPU cores of a system. I/O requests are not CPU-intensive and therefore can be left with the single-thread loop. But processing these requests IS CPU-intensive and is therefore best done with multiple threads (a threadpool).
 
 This design is an adaptation of the [Reactor Pattern](https://en.wikipedia.org/wiki/Reactor_pattern).  The reactor pattern is a server architecture that utilizes an event loop to listen to events (like with `epoll`) and dispatches work to handlers. Handlers can be other processes or, in this case, other threads.
