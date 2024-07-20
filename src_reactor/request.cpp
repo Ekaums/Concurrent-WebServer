@@ -1,4 +1,3 @@
-#include "request.h"
 #include <sstream>
 #include <iostream>
 #include <fcntl.h>
@@ -9,6 +8,7 @@
 #include <sys/socket.h>
 #include <sys/mman.h>
 #include <sys/wait.h>
+#include "include/request.h"
 
 static void request_get_filetype(const std::string &filename, std::string &filetype) {
   if (filename.find(".html") != std::string::npos) 

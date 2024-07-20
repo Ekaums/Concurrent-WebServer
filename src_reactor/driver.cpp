@@ -4,8 +4,8 @@
 #include <assert.h>
 #include <sys/epoll.h>
 #include <sys/socket.h>
-#include "server_helper.h"
-#include "request.h"
+#include "include/server_helper.h"
+#include "include/request.h"
 
 
 /*
@@ -98,9 +98,13 @@ int main(int argc, char *argv[]){
         }
       }
       else{
-        // SHOULD I BE WAITING FOR EPOLLOUT BEFORE SENDING RESPONSE??
+        /* If doing partial R/W:
+            First try sending as much data as possible.
+            If we are able to send everything, done.
+            If not, keep track of remaining data, subscribe client to EPOLLOUT, wait for signal, and send remaining data
+        */
+          
       }
     } 
   }
-
 }
