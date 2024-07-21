@@ -30,10 +30,10 @@ This design is an adaptation of the [Reactor Pattern](https://en.wikipedia.org/w
 
 
 # Requirements
-
 There aren't a lot of requirements to run. Just ensure that cmake is installed and you are using Linux.
 
 # Benchmarking
+The following benchmarks were performed using the [wrk](https://github.com/wg/wrk) tool, a popular HTTP benchmarking tool.
 
 ### Threadpool
 ```
@@ -62,5 +62,3 @@ Transfer/sec:     54.52MB
 ```
 
 As can be seen, the epoll design handled more requests total as well as requests/second. More specifically, there was about a **7.3x** increase in request throughput.  I had assumed this would be the result, as the event-loop provides less overhead with constant thread-blocking and context switching. A great explanation can also be found [here](https://stackoverflow.com/a/2902718).
-
-So simpler is better!
